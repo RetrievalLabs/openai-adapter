@@ -1,7 +1,10 @@
 import time
 from datetime import datetime, timezone
+from typing import Any
+
 from openai import OpenAI
 from rag_control.adapters import LLM
+from rag_control.exceptions import LLMAdapterError
 from rag_control.models import (
     LLMMetadata,
     LLMResponse,
@@ -10,7 +13,7 @@ from rag_control.models import (
     LLMUsage,
     PromptInput,
 )
-from rag_control.exceptions import LLMAdapterError
+
 
 class OpenAILLMAdapter(LLM):
     """
@@ -25,7 +28,7 @@ class OpenAILLMAdapter(LLM):
         response = adapter.generate("What is machine learning?")
     """
 
-    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo", **kwargs):
+    def __init__(self, api_key: str, model: str = "gpt-3.5-turbo", **kwargs: Any) -> None:
         """
         Initialize the OpenAI LLM adapter.
 
@@ -76,7 +79,7 @@ class OpenAILLMAdapter(LLM):
             messages = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt
 
             # Build API parameters
-            api_params = {
+            api_params: dict[str, Any] = {
                 "model": self._model,
                 "messages": messages,
             }
@@ -98,15 +101,19 @@ class OpenAILLMAdapter(LLM):
                 latency_ms=latency_ms,
                 request_id=response.id,
                 timestamp=datetime.now(timezone.utc),
-                usage=LLMUsage(
-                    prompt_tokens=response.usage.prompt_tokens,
-                    completion_tokens=response.usage.completion_tokens,
-                    total_tokens=response.usage.total_tokens,
-                ) if response.usage else None,
+                usage=(
+                    LLMUsage(
+                        prompt_tokens=response.usage.prompt_tokens,
+                        completion_tokens=response.usage.completion_tokens,
+                        total_tokens=response.usage.total_tokens,
+                    )
+                    if response.usage
+                    else None
+                ),
                 raw={
                     "model": response.model,
                     "finish_reason": response.choices[0].finish_reason,
-                }
+                },
             )
 
             return LLMResponse(text=generated_text, metadata=metadata)
@@ -140,7 +147,7 @@ class OpenAILLMAdapter(LLM):
             messages = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt
 
             # Build API parameters
-            api_params = {
+            api_params: dict[str, Any] = {
                 "model": self._model,
                 "messages": messages,
                 "stream": True,
@@ -156,15 +163,15 @@ class OpenAILLMAdapter(LLM):
             request_id = None
             usage = None
 
-            def chunk_generator():
+            def chunk_generator() -> Any:
                 nonlocal request_id, usage
                 for chunk in stream:
                     # Capture request_id from first chunk
-                    if request_id is None and hasattr(chunk, 'id'):
+                    if request_id is None and hasattr(chunk, "id"):
                         request_id = chunk.id
 
                     # Capture usage from final chunk
-                    if hasattr(chunk, 'usage') and chunk.usage:
+                    if hasattr(chunk, "usage") and chunk.usage:
                         usage = LLMUsage(
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,
@@ -174,7 +181,7 @@ class OpenAILLMAdapter(LLM):
                     if chunk.choices[0].delta.content:
                         yield LLMStreamChunk(
                             text=chunk.choices[0].delta.content,
-                            timestamp=datetime.now(timezone.utc)
+                            timestamp=datetime.now(timezone.utc),
                         )
 
             latency_ms = (time.time() - start_time) * 1000
@@ -187,9 +194,6 @@ class OpenAILLMAdapter(LLM):
                 usage=usage,
             )
 
-            return LLMStreamResponse(
-                stream=chunk_generator(),
-                metadata=metadata
-            )
+            return LLMStreamResponse(stream=chunk_generator(), metadata=metadata)
         except Exception as e:
             raise LLMAdapterError(f"Failed to stream from OpenAI: {str(e)}")

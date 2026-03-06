@@ -1,13 +1,15 @@
-
 import time
 from datetime import datetime
+from typing import Any
+
 from openai import OpenAI
 from rag_control.adapters import QueryEmbedding
+from rag_control.exceptions import QueryEmbeddingAdapterError
 from rag_control.models import (
     QueryEmbeddingMetadata,
     QueryEmbeddingResponse,
 )
-from rag_control.exceptions import QueryEmbeddingAdapterError
+
 
 class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
     """
@@ -21,7 +23,7 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
         response = adapter.embed("What is machine learning?")
     """
 
-    def __init__(self, api_key: str, model: str = "text-embedding-3-small", **kwargs):
+    def __init__(self, api_key: str, model: str = "text-embedding-3-small", **kwargs: Any) -> None:
         """
         Initialize the OpenAI embedding adapter.
 
@@ -39,7 +41,7 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
             self._client = OpenAI(api_key=api_key, **kwargs)
         except Exception as e:
             raise QueryEmbeddingAdapterError(f"Failed to initialize OpenAI client: {str(e)}")
-        
+
     @property
     def embedding_model(self) -> str:
         """Return the name of the embedding model being used."""
@@ -65,10 +67,7 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
         try:
             # Measure API latency
             start_time = time.time()
-            response = self._client.embeddings.create(
-                model=self._model,
-                input=query
-            )
+            response = self._client.embeddings.create(model=self._model, input=query)
             latency_ms = (time.time() - start_time) * 1000
 
             # Extract embedding vector and dimensions
@@ -81,12 +80,11 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
                 provider="openai",
                 latency_ms=latency_ms,
                 dimensions=dimensions,
-                request_id=response.id,
                 timestamp=datetime.utcnow(),
                 raw={
                     "model": response.model,
                     "usage": response.usage.model_dump() if response.usage else None,
-                }
+                },
             )
 
             return QueryEmbeddingResponse(embedding=embedding, metadata=metadata)

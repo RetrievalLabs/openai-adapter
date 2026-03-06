@@ -21,7 +21,7 @@ from rag_control.models import (
 from rag_control.models.user_context import UserContext
 
 
-class OpenAILLMAdapter(LLM):  
+class OpenAILLMAdapter(LLM):
     """
     OpenAI adapter for language models.
 

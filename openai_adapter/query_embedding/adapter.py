@@ -17,7 +17,7 @@ from rag_control.models import (
 from rag_control.models.user_context import UserContext
 
 
-class OpenAIQueryEmbeddingAdapter(QueryEmbedding):  
+class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
     """
     OpenAI adapter for query embedding.
 

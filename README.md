@@ -36,7 +36,7 @@ uv sync
 ### Version Compatibility
 
 - **Current Stable Version:** v0.1.0
-- **Compatible with:** rag-control v0.1.0
+- **Compatible with:** rag-control v0.1.2
 
 ## Quick Start
 

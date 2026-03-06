@@ -22,15 +22,14 @@ sync: install
 sync-dev: install-dev
 
 test: install-dev
-	uv run --python $(VENV_DIR)/bin/python pytest -v
+	uv run --python $(VENV_DIR)/bin/python pytest -v tests/
 
 tests: test
 
-unit-test: install-dev
-	uv run --python $(VENV_DIR)/bin/python pytest -v tests/unit
+unit-test: test
 
 coverage: install-dev
-	uv run --python $(VENV_DIR)/bin/python pytest -v --cov=rag_control --cov-report=term-missing --cov-report=xml --cov-report=html
+	uv run --python $(VENV_DIR)/bin/python pytest -v tests/ --cov=openai_adapter --cov-report=term-missing --cov-report=xml --cov-report=html
 
 lint: install-dev
 	uv run --python $(VENV_DIR)/bin/python ruff check .

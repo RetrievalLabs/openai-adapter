@@ -24,3 +24,33 @@ keywords = [
   "hallucination",
   "enterprise-ai"
 ]
+
+[tool.ruff]
+line-length = 100
+fix = true
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.black]
+line-length = 100
+
+[tool.mypy]
+strict = true
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "mypy>=1.19.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.15.1",
+]
+
+[tool.coverage.run]
+source = ["openai_adapter"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+omit = ["tests/*"]

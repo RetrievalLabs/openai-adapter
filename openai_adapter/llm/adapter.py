@@ -152,8 +152,25 @@ class OpenAILLMAdapter(LLM):
 
             stream = self._client.chat.completions.create(**api_params)
 
+            # Extract request_id and usage from stream
+            request_id = None
+            usage = None
+
             def chunk_generator():
+                nonlocal request_id, usage
                 for chunk in stream:
+                    # Capture request_id from first chunk
+                    if request_id is None and hasattr(chunk, 'id'):
+                        request_id = chunk.id
+
+                    # Capture usage from final chunk
+                    if hasattr(chunk, 'usage') and chunk.usage:
+                        usage = LLMUsage(
+                            prompt_tokens=chunk.usage.prompt_tokens,
+                            completion_tokens=chunk.usage.completion_tokens,
+                            total_tokens=chunk.usage.total_tokens,
+                        )
+
                     if chunk.choices[0].delta.content:
                         yield LLMStreamChunk(
                             text=chunk.choices[0].delta.content,
@@ -165,7 +182,9 @@ class OpenAILLMAdapter(LLM):
                 model=self._model,
                 provider="openai",
                 latency_ms=latency_ms,
+                request_id=request_id,
                 timestamp=datetime.now(timezone.utc),
+                usage=usage,
             )
 
             return LLMStreamResponse(

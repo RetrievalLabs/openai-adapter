@@ -28,6 +28,9 @@ keywords = [
   "enterprise-ai"
 ]
 
+[tool.setuptools.package-data]
+openai_adapter = ["py.typed"]
+
 [tool.ruff]
 line-length = 100
 fix = true

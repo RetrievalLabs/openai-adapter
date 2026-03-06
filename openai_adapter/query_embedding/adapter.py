@@ -14,9 +14,10 @@ from rag_control.models import (
     QueryEmbeddingMetadata,
     QueryEmbeddingResponse,
 )
+from rag_control.models.user_context import UserContext
 
 
-class OpenAIQueryEmbeddingAdapter(QueryEmbedding):  # type: ignore[misc]
+class OpenAIQueryEmbeddingAdapter(QueryEmbedding):  
     """
     OpenAI adapter for query embedding.
 
@@ -52,7 +53,7 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):  # type: ignore[misc]
         """Return the name of the embedding model being used."""
         return self._model
 
-    def embed(self, query: str) -> QueryEmbeddingResponse:
+    def embed(self, query: str, user_context: UserContext | None = None) -> QueryEmbeddingResponse:
         """
         Generate an embedding vector for the given query.
 

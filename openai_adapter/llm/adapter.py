@@ -18,9 +18,10 @@ from rag_control.models import (
     LLMUsage,
     PromptInput,
 )
+from rag_control.models.user_context import UserContext
 
 
-class OpenAILLMAdapter(LLM):  # type: ignore[misc]
+class OpenAILLMAdapter(LLM):  
     """
     OpenAI adapter for language models.
 
@@ -62,6 +63,7 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
         prompt: PromptInput,
         temperature: float | None = None,
         max_output_tokens: int | None = None,
+        user_context: UserContext | None = None,
     ) -> LLMResponse:
         """
         Generate text completion for the given prompt.
@@ -99,6 +101,17 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
             # Extract generated text
             generated_text = response.choices[0].message.content
 
+            # Extract usage
+            usage = (
+                LLMUsage(
+                    prompt_tokens=response.usage.prompt_tokens,
+                    completion_tokens=response.usage.completion_tokens,
+                    total_tokens=response.usage.total_tokens,
+                )
+                if response.usage
+                else LLMUsage(prompt_tokens=0, completion_tokens=0, total_tokens=0)
+            )
+
             # Collect metadata
             metadata = LLMMetadata(
                 model=self._model,
@@ -106,22 +119,13 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
                 latency_ms=latency_ms,
                 request_id=response.id,
                 timestamp=datetime.now(timezone.utc),
-                usage=(
-                    LLMUsage(
-                        prompt_tokens=response.usage.prompt_tokens,
-                        completion_tokens=response.usage.completion_tokens,
-                        total_tokens=response.usage.total_tokens,
-                    )
-                    if response.usage
-                    else None
-                ),
                 raw={
                     "model": response.model,
                     "finish_reason": response.choices[0].finish_reason,
                 },
             )
 
-            return LLMResponse(text=generated_text, metadata=metadata)
+            return LLMResponse(content=generated_text, usage=usage, metadata=metadata)
         except Exception as e:
             raise LLMAdapterError(f"Failed to generate text from OpenAI: {str(e)}")
 
@@ -130,6 +134,7 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
         prompt: PromptInput,
         temperature: float | None = None,
         max_output_tokens: int | None = None,
+        user_context: UserContext | None = None,
     ) -> LLMStreamResponse:
         """
         Stream text generation for the given prompt.
@@ -184,10 +189,7 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
                         )
 
                     if chunk.choices[0].delta.content:
-                        yield LLMStreamChunk(
-                            text=chunk.choices[0].delta.content,
-                            timestamp=datetime.now(timezone.utc),
-                        )
+                        yield LLMStreamChunk(delta=chunk.choices[0].delta.content)
 
             latency_ms = (time.time() - start_time) * 1000
             metadata = LLMMetadata(
@@ -196,9 +198,12 @@ class OpenAILLMAdapter(LLM):  # type: ignore[misc]
                 latency_ms=latency_ms,
                 request_id=request_id,
                 timestamp=datetime.now(timezone.utc),
-                usage=usage,
             )
 
-            return LLMStreamResponse(stream=chunk_generator(), metadata=metadata)
+            return LLMStreamResponse(
+                stream=chunk_generator(),
+                usage=usage,
+                metadata=metadata,
+            )
         except Exception as e:
             raise LLMAdapterError(f"Failed to stream from OpenAI: {str(e)}")

@@ -4,7 +4,7 @@ Licensed under the Apache License, Version 2.0.
 """
 
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from openai import OpenAI
@@ -16,7 +16,7 @@ from rag_control.models import (
 )
 
 
-class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
+class OpenAIQueryEmbeddingAdapter(QueryEmbedding):  # type: ignore[misc]
     """
     OpenAI adapter for query embedding.
 
@@ -85,7 +85,7 @@ class OpenAIQueryEmbeddingAdapter(QueryEmbedding):
                 provider="openai",
                 latency_ms=latency_ms,
                 dimensions=dimensions,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 raw={
                     "model": response.model,
                     "usage": response.usage.model_dump() if response.usage else None,

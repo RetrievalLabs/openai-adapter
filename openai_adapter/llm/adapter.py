@@ -20,7 +20,7 @@ from rag_control.models import (
 )
 
 
-class OpenAILLMAdapter(LLM):
+class OpenAILLMAdapter(LLM):  # type: ignore[misc]
     """
     OpenAI adapter for language models.
 

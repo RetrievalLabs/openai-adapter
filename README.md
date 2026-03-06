@@ -40,49 +40,27 @@ uv sync
 
 ## Quick Start
 
-### LLM Adapter
+### Integration with rag-control
 
-Generate text completions using OpenAI's language models:
+The OpenAI Adapter is designed to integrate seamlessly with the rag-control framework:
 
 ```python
-from openai_adapter import OpenAILLMAdapter
+from rag_control import RAGControl
+from openai_adapter import OpenAILLMAdapter, OpenAIQueryEmbeddingAdapter
 
-# Initialize adapter
-adapter = OpenAILLMAdapter(api_key="sk-...")
+# Initialize adapters
+llm_adapter = OpenAILLMAdapter(api_key="sk-...")
+embedding_adapter = OpenAIQueryEmbeddingAdapter(api_key="sk-...")
 
-# Simple text generation
-response = adapter.generate("What is machine learning?")
-print(response.text)
-print(response.metadata)  # latency, usage, model info
-
-# With parameters
-response = adapter.generate(
-    "What is machine learning?",
-    temperature=0.7,
-    max_output_tokens=100
+# Create RAG system with OpenAI adapters
+rag = RAGControl(
+  llm_adapter=llm_adapter,
+  embedding_adapter=embedding_adapter
 )
 
-# Streaming
-stream_response = adapter.stream("Tell me a story")
-for chunk in stream_response.stream:
-    print(chunk.text, end="", flush=True)
-print(stream_response.metadata)  # Final metadata with usage
-```
-
-### Query Embedding Adapter
-
-Generate embeddings for text queries:
-
-```python
-from openai_adapter import OpenAIQueryEmbeddingAdapter
-
-# Initialize adapter
-adapter = OpenAIQueryEmbeddingAdapter(api_key="sk-...")
-
-# Generate embedding
-response = adapter.embed("machine learning algorithms")
-print(response.embedding)  # Vector of embeddings
-print(response.metadata)   # Model, dimensions, latency
+# Use for RAG operations
+response = rag.query("What is machine learning?")
+print(response.answer)
 ```
 
 ## API Reference
@@ -105,28 +83,6 @@ Initialize the LLM adapter.
 **Raises:**
 - `LLMAdapterError`: If client initialization fails
 
-#### `generate(prompt, temperature=None, max_output_tokens=None)`
-
-Generate a text completion.
-
-**Parameters:**
-- `prompt` (str | list[dict]): Text or list of chat messages
-- `temperature` (float, optional): Sampling temperature (0-2)
-- `max_output_tokens` (int, optional): Maximum tokens in response
-
-**Returns:**
-- `LLMResponse`: Contains generated text and metadata
-
-#### `stream(prompt, temperature=None, max_output_tokens=None)`
-
-Stream text generation in real-time.
-
-**Parameters:**
-- Same as `generate()`
-
-**Returns:**
-- `LLMStreamResponse`: Generator yielding text chunks with final metadata
-
 ### OpenAIQueryEmbeddingAdapter
 
 #### `__init__(api_key: str, model: str = "text-embedding-3-small", **kwargs)`
@@ -141,86 +97,6 @@ Initialize the embedding adapter.
 **Raises:**
 - `QueryEmbeddingAdapterError`: If client initialization fails
 
-#### `embed(query: str)`
-
-Generate an embedding vector.
-
-**Parameters:**
-- `query` (str): Text to embed
-
-**Returns:**
-- `QueryEmbeddingResponse`: Contains embedding vector and metadata
-
-## Configuration
-
-### Environment Variables
-
-```bash
-export OPENAI_API_KEY="sk-..."
-```
-
-### Custom Endpoints
-
-```python
-adapter = OpenAILLMAdapter(
-    api_key="sk-...",
-    base_url="https://custom-endpoint.com/v1"
-)
-```
-
-### Organization & Project
-
-```python
-adapter = OpenAILLMAdapter(
-    api_key="sk-...",
-    organization="org-123",
-    project="proj-456"
-)
-```
-
-## Metadata
-
-All responses include comprehensive metadata:
-
-```python
-response = adapter.generate("prompt")
-
-# Access metadata
-metadata = response.metadata
-print(metadata.model)              # "gpt-3.5-turbo"
-print(metadata.provider)           # "openai"
-print(metadata.latency_ms)         # API latency in milliseconds
-print(metadata.request_id)         # OpenAI request ID
-print(metadata.timestamp)          # Request timestamp (UTC)
-print(metadata.usage.prompt_tokens)        # Input tokens
-print(metadata.usage.completion_tokens)    # Output tokens
-print(metadata.usage.total_tokens)         # Total tokens
-print(metadata.raw)                # Raw API response data
-```
-
-## Error Handling
-
-```python
-from rag_control.exceptions import LLMAdapterError, QueryEmbeddingAdapterError
-
-try:
-    response = adapter.generate("prompt")
-except LLMAdapterError as e:
-    print(f"LLM Error: {e}")
-except QueryEmbeddingAdapterError as e:
-    print(f"Embedding Error: {e}")
-```
-
-## Supported Models
-
-### LLM Models
-- `gpt-4o` - Latest multimodal model
-- `gpt-4-turbo` - High-performance model
-- `gpt-3.5-turbo` - Fast and cost-effective (default)
-
-### Embedding Models
-- `text-embedding-3-large` - Most powerful
-- `text-embedding-3-small` - Fast and efficient (default)
 
 ## Development & Contributing
 

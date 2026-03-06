@@ -9,7 +9,10 @@ authors = [{ name = "RetrievalLabs" }]
 description = "OpenAI adapter of rag-control"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["rag-control==0.1.0"]
+dependencies = [
+    "openai>=1.0.0,<2.0.0",
+    "rag-control==0.1.0",
+]
 license = { file = "LICENSE" }
 
 keywords = [

@@ -1,7 +1,26 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "openai-adapter"
 version = "0.1.0"
-description = "Add your description here"
+authors = [{ name = "RetrievalLabs" }]
+description = "OpenAI adapter of rag-control"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = []
+license = { file = "LICENSE" }
+
+keywords = [
+  "rag-control",
+  "openai",
+  "rag",
+  "llm",
+  "governance",
+  "ai-security",
+  "retrieval",
+  "rbac",
+  "hallucination",
+  "enterprise-ai"
+]

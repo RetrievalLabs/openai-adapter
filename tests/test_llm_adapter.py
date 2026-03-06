@@ -4,6 +4,7 @@ Licensed under the Apache License, Version 2.0.
 """
 
 from datetime import datetime
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,14 +19,14 @@ class TestOpenAILLMAdapter:
     """Test suite for OpenAILLMAdapter."""
 
     @pytest.fixture
-    def adapter(self):
+    def adapter(self) -> Any:
         """Create an adapter instance with mocked OpenAI client."""
         with patch("openai_adapter.llm.adapter.OpenAI") as mock:
             mock.return_value = MagicMock()
             adapter = OpenAILLMAdapter(api_key="test-key", model="gpt-4")
             yield adapter
 
-    def test_initialization_success(self):
+    def test_initialization_success(self) -> None:
         """Test successful adapter initialization."""
         with patch("openai_adapter.llm.adapter.OpenAI") as mock:
             mock.return_value = MagicMock()
@@ -33,7 +34,7 @@ class TestOpenAILLMAdapter:
             assert adapter.model_name == "gpt-4"
             mock.assert_called_once_with(api_key="test-key")
 
-    def test_initialization_with_kwargs(self):
+    def test_initialization_with_kwargs(self) -> None:
         """Test initialization with additional OpenAI client options."""
         with patch("openai_adapter.llm.adapter.OpenAI") as mock:
             mock.return_value = MagicMock()
@@ -44,22 +45,22 @@ class TestOpenAILLMAdapter:
                 timeout=30,
             )
             assert adapter.model_name == "gpt-4"
-            mock.assert_called_once_with(
-                api_key="test-key", organization="test-org", timeout=30
-            )
+            mock.assert_called_once_with(api_key="test-key", organization="test-org", timeout=30)
 
-    def test_initialization_failure(self):
+    def test_initialization_failure(self) -> None:
         """Test initialization failure handling."""
         with patch("openai_adapter.llm.adapter.OpenAI") as mock:
             mock.side_effect = Exception("Connection error")
             with pytest.raises(LLMAdapterError, match="Failed to initialize OpenAI client"):
                 OpenAILLMAdapter(api_key="test-key")
 
-    def test_model_name_property(self, adapter):
+    def test_model_name_property(self, adapter: OpenAILLMAdapter) -> None:
         """Test model_name property."""
         assert adapter.model_name == "gpt-4"
 
-    def _create_mock_response(self, content="Generated text", finish_reason="stop"):
+    def _create_mock_response(
+        self, content: str = "Generated text", finish_reason: str = "stop"
+    ) -> MagicMock:
         """Helper to create mock response."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -84,34 +85,41 @@ class TestOpenAILLMAdapter:
             ),
         ],
     )
-    def test_generate_prompt_types(self, adapter, prompt, expected_messages):
+    def test_generate_prompt_types(
+        self, adapter: OpenAILLMAdapter, prompt: Any, expected_messages: Any
+    ) -> None:
         """Test generate with different prompt types."""
-        adapter._client.chat.completions.create.return_value = self._create_mock_response()
+        adapter._client.chat.completions.create.return_value = self._create_mock_response()  # type: ignore  # type: ignore
 
         result = adapter.generate(prompt)
 
         assert isinstance(result, LLMResponse)
         assert result.content == "Generated text"
-        call_kwargs = adapter._client.chat.completions.create.call_args[1]
+        call_kwargs = adapter._client.chat.completions.create.call_args[1]  # type: ignore  # type: ignore
         assert call_kwargs["messages"] == expected_messages
 
     @pytest.mark.parametrize("temperature,max_tokens", [(0.5, None), (None, 100), (0.8, 50)])
-    def test_generate_parameters(self, adapter, temperature, max_tokens):
+    def test_generate_parameters(
+        self,
+        adapter: OpenAILLMAdapter,
+        temperature: float | None,
+        max_tokens: int | None,
+    ) -> None:
         """Test generate with various parameter combinations."""
-        adapter._client.chat.completions.create.return_value = self._create_mock_response()
+        adapter._client.chat.completions.create.return_value = self._create_mock_response()  # type: ignore
 
         result = adapter.generate("Test", temperature=temperature, max_output_tokens=max_tokens)
 
         assert result.content == "Generated text"
-        call_kwargs = adapter._client.chat.completions.create.call_args[1]
+        call_kwargs = adapter._client.chat.completions.create.call_args[1]  # type: ignore
         if temperature is not None:
             assert call_kwargs["temperature"] == temperature
         if max_tokens is not None:
             assert call_kwargs["max_tokens"] == max_tokens
 
-    def test_generate_response_structure(self, adapter):
+    def test_generate_response_structure(self, adapter: OpenAILLMAdapter) -> None:
         """Test generate response contains all required fields."""
-        adapter._client.chat.completions.create.return_value = self._create_mock_response()
+        adapter._client.chat.completions.create.return_value = self._create_mock_response()  # type: ignore
 
         result = adapter.generate("Test")
 
@@ -126,7 +134,7 @@ class TestOpenAILLMAdapter:
         assert result.metadata.latency_ms > 0
         assert result.metadata.raw["finish_reason"] == "stop"
 
-    def test_generate_without_usage(self, adapter):
+    def test_generate_without_usage(self, adapter: OpenAILLMAdapter) -> None:
         """Test generate when response has no usage information."""
         mock_response = MagicMock()
         mock_response.choices = [MagicMock()]
@@ -136,7 +144,7 @@ class TestOpenAILLMAdapter:
         mock_response.id = "chatcmpl-111"
         mock_response.model = "gpt-4"
 
-        adapter._client.chat.completions.create.return_value = mock_response
+        adapter._client.chat.completions.create.return_value = mock_response  # type: ignore
 
         result = adapter.generate("Test")
 
@@ -145,23 +153,23 @@ class TestOpenAILLMAdapter:
         assert result.usage.completion_tokens == 0
         assert result.usage.total_tokens == 0
 
-    def test_generate_api_error(self, adapter):
+    def test_generate_api_error(self, adapter: OpenAILLMAdapter) -> None:
         """Test generate error handling for API failures."""
-        adapter._client.chat.completions.create.side_effect = Exception("API error")
+        adapter._client.chat.completions.create.side_effect = Exception("API error")  # type: ignore
 
         with pytest.raises(LLMAdapterError, match="Failed to generate text from OpenAI"):
             adapter.generate("Test")
 
-    def test_generate_user_context(self, adapter):
+    def test_generate_user_context(self, adapter: OpenAILLMAdapter) -> None:
         """Test generate accepts user_context parameter."""
-        adapter._client.chat.completions.create.return_value = self._create_mock_response()
+        adapter._client.chat.completions.create.return_value = self._create_mock_response()  # type: ignore
 
         user_context = UserContext(user_id="test_user", org_id="test_org", attributes={})
         result = adapter.generate("Test", user_context=user_context)
 
         assert result.content == "Generated text"
 
-    def _create_mock_stream_chunks(self, include_usage=True):
+    def _create_mock_stream_chunks(self, include_usage: bool = True) -> list[MagicMock]:
         """Helper to create mock stream chunks."""
         chunks = []
 
@@ -199,36 +207,41 @@ class TestOpenAILLMAdapter:
             [{"role": "user", "content": "Hi"}],
         ],
     )
-    def test_stream_prompt_types(self, adapter, prompt):
+    def test_stream_prompt_types(self, adapter: OpenAILLMAdapter, prompt: Any) -> None:
         """Test stream with different prompt types."""
         chunks = self._create_mock_stream_chunks(include_usage=False)
-        adapter._client.chat.completions.create.return_value = iter(chunks)
+        adapter._client.chat.completions.create.return_value = iter(chunks)  # type: ignore
 
         result = adapter.stream(prompt)
         stream_chunks = list(result.stream)
 
-        assert result.metadata.provider == "openai"
+        assert result.metadata.provider == "openai"  # type: ignore
         assert len(stream_chunks) == 2
         assert stream_chunks[0].delta == "Hello "
         assert stream_chunks[1].delta == "world"
 
     @pytest.mark.parametrize("temperature,max_tokens", [(0.5, None), (None, 100), (0.8, 50)])
-    def test_stream_parameters(self, adapter, temperature, max_tokens):
+    def test_stream_parameters(
+        self,
+        adapter: OpenAILLMAdapter,
+        temperature: float | None,
+        max_tokens: int | None,
+    ) -> None:
         """Test stream with various parameter combinations."""
         chunks = self._create_mock_stream_chunks()
-        adapter._client.chat.completions.create.return_value = iter(chunks)
+        adapter._client.chat.completions.create.return_value = iter(chunks)  # type: ignore
 
         result = adapter.stream("Test", temperature=temperature, max_output_tokens=max_tokens)
         list(result.stream)
 
-        call_kwargs = adapter._client.chat.completions.create.call_args[1]
+        call_kwargs = adapter._client.chat.completions.create.call_args[1]  # type: ignore
         assert call_kwargs["stream"] is True
         if temperature is not None:
             assert call_kwargs["temperature"] == temperature
         if max_tokens is not None:
             assert call_kwargs["max_tokens"] == max_tokens
 
-    def test_stream_empty_chunks_skipped(self, adapter):
+    def test_stream_empty_chunks_skipped(self, adapter: OpenAILLMAdapter) -> None:
         """Test that empty/None chunks are skipped in stream."""
         chunk1 = MagicMock()
         chunk1.id = "chatcmpl-empty"
@@ -248,7 +261,7 @@ class TestOpenAILLMAdapter:
         chunk3.choices[0].delta.content = ""
         chunk3.usage = None
 
-        adapter._client.chat.completions.create.return_value = iter([chunk1, chunk2, chunk3])
+        adapter._client.chat.completions.create.return_value = iter([chunk1, chunk2, chunk3])  # type: ignore
 
         result = adapter.stream("Test")
         chunks = list(result.stream)
@@ -256,34 +269,34 @@ class TestOpenAILLMAdapter:
         assert len(chunks) == 1
         assert chunks[0].delta == "Text"
 
-    def test_stream_api_error(self, adapter):
+    def test_stream_api_error(self, adapter: OpenAILLMAdapter) -> None:
         """Test stream error handling."""
-        adapter._client.chat.completions.create.side_effect = Exception("Stream error")
+        adapter._client.chat.completions.create.side_effect = Exception("Stream error")  # type: ignore
 
         with pytest.raises(LLMAdapterError, match="Failed to stream from OpenAI"):
             adapter.stream("Test")
 
-    def test_stream_user_context(self, adapter):
+    def test_stream_user_context(self, adapter: OpenAILLMAdapter) -> None:
         """Test stream accepts user_context parameter."""
         chunks = self._create_mock_stream_chunks()
-        adapter._client.chat.completions.create.return_value = iter(chunks)
+        adapter._client.chat.completions.create.return_value = iter(chunks)  # type: ignore
 
         user_context = UserContext(user_id="test_user", org_id="test_org", attributes={})
         result = adapter.stream("Test", user_context=user_context)
         list(result.stream)
 
-        assert result.metadata.model == "gpt-4"
-        assert result.metadata.provider == "openai"
+        assert result.metadata.model == "gpt-4"  # type: ignore
+        assert result.metadata.provider == "openai"  # type: ignore
 
-    def test_stream_metadata(self, adapter):
+    def test_stream_metadata(self, adapter: OpenAILLMAdapter) -> None:
         """Test stream metadata structure."""
         chunks = self._create_mock_stream_chunks()
-        adapter._client.chat.completions.create.return_value = iter(chunks)
+        adapter._client.chat.completions.create.return_value = iter(chunks)  # type: ignore
 
         result = adapter.stream("Test")
         list(result.stream)
 
-        assert result.metadata.model == "gpt-4"
-        assert result.metadata.provider == "openai"
-        assert isinstance(result.metadata.timestamp, datetime)
-        assert result.metadata.latency_ms > 0
+        assert result.metadata.model == "gpt-4"  # type: ignore
+        assert result.metadata.provider == "openai"  # type: ignore
+        assert isinstance(result.metadata.timestamp, datetime)  # type: ignore
+        assert result.metadata.latency_ms > 0  # type: ignore

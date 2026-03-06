@@ -231,7 +231,7 @@ For information on setting up a development environment, code style guidelines, 
 
 ## License
 
-Licensed under the RetrievalLabs Business-Restricted License (RBRL) v1.0
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE) file for details.
 
 ## Support
 
